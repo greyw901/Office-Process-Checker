@@ -1,0 +1,197 @@
+================================================================
+  Office / PDF Process Checker — User Instruction
+================================================================
+
+----------------------------------------------------------------
+  FOR USERS
+----------------------------------------------------------------
+
+STEP 1: Prepare
+  No setup needed beyond having Python installed.
+  Place Office Process Checker.py anywhere convenient
+  (e.g. Desktop).
+
+STEP 2: When to run
+  Run this tool when any of the following happen:
+    - Double-clicking a PDF, Excel, or Word file has no effect
+    - An Office or PDF application stopped responding
+    - You suspect a background process is blocking a new open
+
+STEP 3: Run
+  Double-click: Office Process Checker.py
+
+STEP 4: Read the output
+  The tool lists all running Office and PDF processes:
+
+    [RUNNING NORMALLY]
+      PID 16680   Acrobat.exe   25m 16s   142 MB   [Bank Report.pdf]
+      PID 27104   Acrobat.exe   25m 16s    34 MB   [no window]
+
+    [NOT RESPONDING]
+      PID 4821    EXCEL.EXE      47m 10s  312 MB   [no window]
+
+  Columns shown:
+    PID       : Process ID (unique number for that instance)
+    Name      : Program executable name
+    Duration  : How long the process has been running
+    Memory    : RAM currently used by that process
+    [Title]   : Window title (file open in that instance)
+                [no window] means the process has no visible window
+
+STEP 5: Decide what to kill
+  Common situations:
+
+  Symptom: Cannot open PDF, no Acrobat window visible
+    -> All Acrobat.exe show [no window]
+    -> Type:  Acrobat.exe   (kills all Acrobat processes at once)
+
+  Symptom: One Excel file frozen, another still working fine
+    -> Kill only the frozen one by PID
+    -> Type:  4821
+
+  Symptom: Multiple stuck processes of the same program
+    -> Type the program name to kill all at once
+    -> Type:  Acrobat.exe   or   EXCEL.EXE   or   WINWORD.EXE
+
+STEP 6: Input
+  At the prompt, type one of the following and press Enter:
+
+    By name  ->  Acrobat.exe         kills ALL Acrobat processes
+    By PID   ->  1808 12044          kills those two specifically
+    Enter    ->  (blank)             exits without doing anything
+
+  After killing, re-open your file normally.
+
+
+----------------------------------------------------------------
+  WHAT THIS TOOL MONITORS
+----------------------------------------------------------------
+
+  Program                  Executable
+  -----------------------  --------------------
+  Microsoft Excel          EXCEL.EXE
+  Microsoft Word           WINWORD.EXE
+  Microsoft PowerPoint     POWERPNT.EXE
+  Microsoft Outlook        OUTLOOK.EXE
+  Microsoft OneNote        ONENOTE.EXE
+  Microsoft Access         MSACCESS.EXE
+  Microsoft Publisher      MSPUB.EXE
+  Adobe Acrobat            Acrobat.exe
+  Adobe Reader             AcroRd32.exe
+  Foxit PDF Editor         FoxitPDFEditor.exe
+  Foxit Reader             FoxitReader.exe
+
+
+----------------------------------------------------------------
+  WHY FILES SOMETIMES CANNOT BE OPENED
+----------------------------------------------------------------
+
+  Adobe Acrobat runs as multiple processes simultaneously
+  (one main process plus several sub-processes for rendering,
+  plugins, and crash handling). When one sub-process encounters
+  an internal error, Acrobat may display an error dialog that
+  is hidden behind other windows or positioned off-screen.
+
+  While waiting for you to dismiss that dialog, Acrobat stops
+  handling new open requests. Every time you double-click a PDF,
+  the request is sent to the stuck instance and silently dropped.
+  Acrobat may also spawn additional sub-processes trying to
+  handle the request, which is why the process count grows.
+
+  Killing all Acrobat processes clears the stuck instance
+  entirely. The next double-click starts a fresh instance.
+
+  The same pattern can occur with Excel and Word, though less
+  commonly.
+
+
+----------------------------------------------------------------
+  FOR DEVELOPER
+----------------------------------------------------------------
+
+  Dependencies
+  ------------
+  - psutil       (process enumeration and termination)
+  - ctypes       (Windows API calls — built into Python)
+
+  Not Responding Detection
+  ------------------------
+  - Enumerates all visible windows via EnumWindows
+  - For each window belonging to the target PID,
+    sends WM_NULL via SendMessageTimeout (3 second timeout,
+    SMTO_ABORTIFHUNG flag)
+  - If SendMessageTimeout returns 0, the window is hung
+  - Processes with no visible window are classified as
+    RUNNING NORMALLY (cannot be confirmed as hung without
+    a message pump to probe)
+
+  Window Title Retrieval
+  ----------------------
+  - EnumWindows iterates all top-level windows
+  - Matches by PID via GetWindowThreadProcessId
+  - Filters to visible windows (IsWindowVisible)
+  - Retrieves text via GetWindowTextW
+  - Returns the longest title found (most descriptive)
+  - Returns [no window] if no visible window exists
+
+  Kill Logic
+  ----------
+  - By name: matches proc['name'].upper() against input.upper()
+             kills all matching entries
+  - By PID:  matches str(pid) against input token
+             kills that single entry
+  - Uses psutil Process.kill() (SIGKILL equivalent on Windows)
+  - AccessDenied: advises user to run as Administrator
+  - NoSuchProcess: silently skips (already gone)
+
+
+----------------------------------------------------------------
+  ENVIRONMENT SETUP (one-time only)
+----------------------------------------------------------------
+
+  Python Version
+  --------------
+  Python 3.8 or above
+  Download: https://www.python.org/downloads/
+
+  Required Package
+  ----------------
+  Run the following once in Command Prompt:
+
+    pip install psutil
+
+  No other dependencies required.
+
+
+----------------------------------------------------------------
+  TROUBLESHOOTING
+----------------------------------------------------------------
+
+  Error / Symptom                    Cause / Fix
+  --------------------------------   ----------------------------------------
+  Window flashes and closes          Python not associated with .py files
+                                     Right-click -> "Open with" -> Python
+
+  [FAILED] Access denied             Process is protected by Windows
+                                     Right-click the .py file ->
+                                     "Run as Administrator"
+
+  Process still running after kill   Protected system process or antivirus
+                                     intervention — run as Administrator
+
+  [no window] on all entries         Normal for background sub-processes
+                                     Safe to kill by name if program
+                                     is completely unresponsive
+
+  Tool shows nothing                 No monitored Office/PDF programs
+                                     are currently running
+
+
+----------------------------------------------------------------
+  CONTACT
+----------------------------------------------------------------
+
+  Developed by : H Sun
+  Last updated : June 2026
+
+================================================================
