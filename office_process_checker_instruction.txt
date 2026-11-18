@@ -1,66 +1,94 @@
 ================================================================
-  Office / PDF Process Checker — User Instruction
+  Office Process Checker — Instruction
 ================================================================
 
 ----------------------------------------------------------------
   FOR USERS
 ----------------------------------------------------------------
 
-STEP 1: Prepare
-  No setup needed beyond having Python installed.
-  Place Office Process Checker.py anywhere convenient
-  (e.g. Desktop).
+STEP 1: When to run
+  Run this tool when:
+    - Double-clicking a PDF, Excel or Word file does nothing
+    - An Office or PDF program has frozen
+    - A program seems to be waiting for something you cannot see
 
-STEP 2: When to run
-  Run this tool when any of the following happen:
-    - Double-clicking a PDF, Excel, or Word file has no effect
-    - An Office or PDF application stopped responding
-    - You suspect a background process is blocking a new open
-
-STEP 3: Run
+STEP 2: Run
   Double-click: Office Process Checker.py
+  Nothing is changed until you choose an action.
 
-STEP 4: Read the output
-  The tool lists all running Office and PDF processes:
+STEP 3: Read the list
+  Every running Office and PDF program is listed, grouped by
+  program, with problems shown first:
 
-    [RUNNING NORMALLY]
-      PID 16680   Acrobat.exe   25m 16s   142 MB   [Bank Report.pdf]
-      PID 27104   Acrobat.exe   25m 16s    34 MB   [no window]
+    Select PROCESS:
 
-    [NOT RESPONDING]
-      PID 4821    EXCEL.EXE      47m 10s  312 MB   [no window]
+       Adobe Acrobat - Acrobat.exe
+       [1]   PID 16680     25m 16s    142 MB   DIALOG OPEN
+               "Bank Report.pdf - Adobe Acrobat Pro"
+               "Adobe Acrobat"   (dialog, off-screen)
+       [2]   PID 27104     25m 16s     34 MB   no window
 
-  Columns shown:
-    PID       : Process ID (unique number for that instance)
-    Name      : Program executable name
-    Duration  : How long the process has been running
-    Memory    : RAM currently used by that process
-    [Title]   : Window title (file open in that instance)
-                [no window] means the process has no visible window
+       Microsoft Excel - EXCEL.EXE
+       [3]   PID 4821      47m 10s    312 MB   NOT RESPONDING
+               "Book1.xlsx - Excel"   (not responding)
 
-STEP 5: Decide what to kill
+  Columns: list number, PID, running time, memory, status.
+  The quoted lines under a process are its open windows.
+
+  Status:
+    NOT RESPONDING  The program is frozen (same test Task Manager
+                    uses).
+    DIALOG OPEN     The program is waiting for you to answer a
+                    message box. This is the usual reason a file
+                    "will not open" - the box may be hidden behind
+                    other windows or off the screen.
+    running         Normal.
+    no window       A background process with no window.
+
+  Window tags:
+    (dialog)        The message box the program is waiting on
+    (off-screen)    The window is outside every monitor
+    (minimized)     The window is minimized
+
+STEP 4: Select
+  Type the list number(s) and press Enter:
+
+    1          one process
+    1 3        several processes
+    2-4        a range
+    excel      every process of that program (acrobat, winword ...)
+
+  Use the [n] list number, not the PID.
+  [R] Refresh scans again.  [0] Exit closes the tool.
+
+STEP 5: Choose an action
+
+    [F] Bring to front
+        Shows the window, or the hidden message box, on top of
+        everything. Off-screen windows are moved back onto the
+        screen. Nothing is closed, nothing is lost.
+        -> Answer the message box, then go back to the list.
+
+    [K] Kill
+        Ends the process at once. Unsaved work in it is lost.
+        A confirm screen follows: [Enter] Continue, [0] Back.
+
+  Always try [F] first when the status is DIALOG OPEN.
+
+STEP 6: Result
+  The result screen lists what was raised or killed, and anything
+  that failed. Press [Enter] Back to list to scan again and check
+  the problem is gone.
+
   Common situations:
-
-  Symptom: Cannot open PDF, no Acrobat window visible
-    -> All Acrobat.exe show [no window]
-    -> Type:  Acrobat.exe   (kills all Acrobat processes at once)
-
-  Symptom: One Excel file frozen, another still working fine
-    -> Kill only the frozen one by PID
-    -> Type:  4821
-
-  Symptom: Multiple stuck processes of the same program
-    -> Type the program name to kill all at once
-    -> Type:  Acrobat.exe   or   EXCEL.EXE   or   WINWORD.EXE
-
-STEP 6: Input
-  At the prompt, type one of the following and press Enter:
-
-    By name  ->  Acrobat.exe         kills ALL Acrobat processes
-    By PID   ->  1808 12044          kills those two specifically
-    Enter    ->  (blank)             exits without doing anything
-
-  After killing, re-open your file normally.
+    Cannot open any PDF, Acrobat shows DIALOG OPEN
+      -> select it, [F], answer the message box
+    Cannot open any PDF, every Acrobat.exe shows no window
+      -> type acrobat, [K]
+    One Excel window frozen (NOT RESPONDING), others fine
+      -> select only that number, [K]
+    EXCEL.EXE with no window, while Excel looks closed
+      -> usually left behind by a script or add-in; safe to [K]
 
 
 ----------------------------------------------------------------
@@ -73,36 +101,14 @@ STEP 6: Input
   Microsoft Word           WINWORD.EXE
   Microsoft PowerPoint     POWERPNT.EXE
   Microsoft Outlook        OUTLOOK.EXE
+  Microsoft Outlook (new)  olk.exe
   Microsoft OneNote        ONENOTE.EXE
   Microsoft Access         MSACCESS.EXE
   Microsoft Publisher      MSPUB.EXE
-  Adobe Acrobat            Acrobat.exe
-  Adobe Reader             AcroRd32.exe
-  Foxit PDF Editor         FoxitPDFEditor.exe
-  Foxit Reader             FoxitReader.exe
-
-
-----------------------------------------------------------------
-  WHY FILES SOMETIMES CANNOT BE OPENED
-----------------------------------------------------------------
-
-  Adobe Acrobat runs as multiple processes simultaneously
-  (one main process plus several sub-processes for rendering,
-  plugins, and crash handling). When one sub-process encounters
-  an internal error, Acrobat may display an error dialog that
-  is hidden behind other windows or positioned off-screen.
-
-  While waiting for you to dismiss that dialog, Acrobat stops
-  handling new open requests. Every time you double-click a PDF,
-  the request is sent to the stuck instance and silently dropped.
-  Acrobat may also spawn additional sub-processes trying to
-  handle the request, which is why the process count grows.
-
-  Killing all Acrobat processes clears the stuck instance
-  entirely. The next double-click starts a fresh instance.
-
-  The same pattern can occur with Excel and Word, though less
-  commonly.
+  Adobe Acrobat            Acrobat.exe, AcroCEF.exe (helper)
+  Adobe Reader (old)       AcroRd32.exe, RdrCEF.exe (helper)
+  Foxit PDF Editor         FoxitPDFEditor.exe, FoxitPhantomPDF.exe
+  Foxit PDF Reader         FoxitPDFReader.exe, FoxitReader.exe
 
 
 ----------------------------------------------------------------
@@ -111,38 +117,72 @@ STEP 6: Input
 
   Dependencies
   ------------
-  - psutil       (process enumeration and termination)
-  - ctypes       (Windows API calls — built into Python)
+  - psutil   process listing, kill, wait for exit
+  - ctypes   Windows API (built into Python); every user32 call
+             has argtypes/restype set, so 64-bit handles and the
+             DWORD_PTR out-parameters are sized correctly
 
-  Not Responding Detection
-  ------------------------
-  - Enumerates all visible windows via EnumWindows
-  - For each window belonging to the target PID,
-    sends WM_NULL via SendMessageTimeout (3 second timeout,
-    SMTO_ABORTIFHUNG flag)
-  - If SendMessageTimeout returns 0, the window is hung
-  - Processes with no visible window are classified as
-    RUNNING NORMALLY (cannot be confirmed as hung without
-    a message pump to probe)
+  Window scan
+  -----------
+  - One EnumWindows pass over all visible top-level windows,
+    grouped by PID - not one pass per process.
+  - Title via GetWindowTextW with a fixed buffer. It reads cached
+    text for other processes' windows and never blocks;
+    GetWindowTextLength is avoided because it can send a message
+    to a hung window.
 
-  Window Title Retrieval
-  ----------------------
-  - EnumWindows iterates all top-level windows
-  - Matches by PID via GetWindowThreadProcessId
-  - Filters to visible windows (IsWindowVisible)
-  - Retrieves text via GetWindowTextW
-  - Returns the longest title found (most descriptive)
-  - Returns [no window] if no visible window exists
+  Status rules (first match wins)
+  -------------------------------
+  - NOT RESPONDING : any visible window where IsHungAppWindow is
+                     true (Windows' own 5-second rule, instant
+                     check, no timeout to wait on)
+  - DIALOG OPEN    : any visible window is disabled - a modal
+                     dialog disables its owner. Enabled windows of
+                     that process are tagged (dialog).
+  - no window      : no visible window. Cannot be judged hung -
+                     there is no window to test.
+  - running        : otherwise
+  - off-screen     : MonitorFromWindow(MONITOR_DEFAULTTONULL)
+                     returns no monitor (minimized windows excluded)
 
-  Kill Logic
-  ----------
-  - By name: matches proc['name'].upper() against input.upper()
-             kills all matching entries
-  - By PID:  matches str(pid) against input token
-             kills that single entry
-  - Uses psutil Process.kill() (SIGKILL equivalent on Windows)
-  - AccessDenied: advises user to run as Administrator
-  - NoSuchProcess: silently skips (already gone)
+  Bring to front
+  --------------
+  - Windows are re-scanned at action time (handles may change).
+  - Targets per process: off-screen windows, then the dialog(s);
+    with no dialog, the window with the longest title.
+  - Off-screen windows are moved to (100, 100); minimized ones
+    restored with ShowWindowAsync.
+  - Z-order is lifted with HWND_TOPMOST then HWND_NOTOPMOST; all
+    SetWindowPos calls use SWP_ASYNCWINDOWPOS so a hung window
+    cannot freeze this tool.
+  - Focus: an ALT key event, then SetForegroundWindow. Windows may
+    still refuse focus to a console program; the result screen then
+    says to click the flashing taskbar button.
+
+  Kill
+  ----
+  - Only after the confirm screen.
+  - proc.is_running() is checked first - it compares the creation
+    time, so a PID reused since the scan is never killed.
+  - psutil kill() = TerminateProcess, then wait_procs up to 5 s.
+    Still alive after that goes under Failed.
+  - AccessDenied: the target runs elevated; run this tool as
+    Administrator. A normal user's Office processes never need it.
+
+  Error log
+  ---------
+  - Written only when [0] Save error log is pressed on a result
+    screen, or after an unexpected error.
+  - File: error log_YYYYMMDD.txt in the script folder (_1, _2 on
+    same-day repeats). Header holds Python/Windows/psutil versions
+    and whether the tool ran as Administrator.
+
+  Known limitations
+  -----------------
+  - A dialog owned by a different process (rare) is not linked to
+    the blocked program; the program still shows DIALOG OPEN.
+  - Hung / dialog detection was tested on the scan logic only; it
+    has not yet been seen live on a frozen Office program.
 
 
 ----------------------------------------------------------------
@@ -160,8 +200,6 @@ STEP 6: Input
 
     pip install psutil
 
-  No other dependencies required.
-
 
 ----------------------------------------------------------------
   TROUBLESHOOTING
@@ -172,26 +210,22 @@ STEP 6: Input
   Window flashes and closes          Python not associated with .py files
                                      Right-click -> "Open with" -> Python
 
-  [FAILED] Access denied             Process is protected by Windows
+  Error: psutil is not installed.    Run once in Command Prompt:
+                                     pip install psutil
+
+  Failed: AccessDenied               The process runs as Administrator.
                                      Right-click the .py file ->
-                                     "Run as Administrator"
+                                     "Run as administrator"
 
-  Process still running after kill   Protected system process or antivirus
-                                     intervention — run as Administrator
-
-  [no window] on all entries         Normal for background sub-processes
-                                     Safe to kill by name if program
-                                     is completely unresponsive
-
-  Tool shows nothing                 No monitored Office/PDF programs
-                                     are currently running
+  No Office or PDF processes are     None of the programs listed above
+  running.                           is running
 
 
 ----------------------------------------------------------------
   CONTACT
 ----------------------------------------------------------------
 
-  Developed by : H Sun
-  Last updated : June 2026
+  Author       : Yeoh Huey Sun
+  Last updated : November 2026
 
 ================================================================
